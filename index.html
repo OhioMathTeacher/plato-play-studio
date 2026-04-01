@@ -327,7 +327,8 @@ textarea {
 }
 .hint-list {
   display: grid;
-  gap: 0.36rem;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.36rem 1.1rem;
 }
 .hint-item {
   position: relative;
@@ -373,18 +374,7 @@ textarea {
   transform: translateY(0);
 }
 .draft-tools-bar {
-  display: grid;
-  grid-template-columns: 320px 1fr;
-  gap: 0.85rem;
-  align-items: start;
-}
-.draft-tool-actions {
-  display: grid;
-  gap: 0.45rem;
-}
-.draft-tool-actions .editor-actions {
-  margin-bottom: 0;
-  flex-wrap: wrap;
+  display: block;
 }
 .draft-tool-help {
   display: grid;
@@ -565,9 +555,6 @@ textarea {
     </section>
 
     <section class="draft-tools-bar">
-      <div class="draft-tool-actions">
-        <div class="editor-note">Scratch pad mode: edits here are temporary and not saved in your browser. Copy what you need directly from the draft text box back into Google Docs.</div>
-      </div>
       <div class="draft-tool-help">
         <div class="editor-tips">
           <div class="tips-card">
