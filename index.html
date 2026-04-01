@@ -512,15 +512,15 @@ textarea {
   <p>Script drafting only: group drafts, shared visibility, and one-click combined script for table read.</p>
   <div class="build-stamp">Build: 2026-04-01-r3</div>
   <div class="toolbar">
-    <button class="btn" onclick="exportProject()">Export Project</button>
-    <button class="btn" onclick="document.getElementById('importFile').click()">Import Project</button>
-    <button class="btn" onclick="seedTemplates()">Load Starter Templates</button>
-    <button class="btn" onclick="clearAllDrafts()">Clear Drafts</button>
+    <button class="btn" onclick="exportProject()" title="Download a JSON backup of your saved group setup, drafts, and combined script.">Export Project</button>
+    <button class="btn" onclick="document.getElementById('importFile').click()" title="Load a previously exported JSON project file back into the studio.">Import Project</button>
+    <button class="btn" onclick="seedTemplates()" title="Fill the draft boxes with sample Plato starter text so you can test formatting and workflow.">Load Starter Templates</button>
+    <button class="btn" onclick="clearAllDrafts()" title="Erase all current draft text and the combined script. Group labels and doc links stay saved.">Clear Drafts</button>
     <div class="zoom-controls">
-      <button class="btn" onclick="adjustZoom(-0.1)">-</button>
+      <button class="btn" onclick="adjustZoom(-0.1)" title="Zoom out the workspace.">-</button>
       <div class="zoom-label" id="zoomLabel">100%</div>
-      <button class="btn" onclick="adjustZoom(0.1)">+</button>
-      <button class="btn" onclick="resetZoom()">Reset Zoom</button>
+      <button class="btn" onclick="adjustZoom(0.1)" title="Zoom in on the workspace.">+</button>
+      <button class="btn" onclick="resetZoom()" title="Return the workspace to normal size.">Reset Zoom</button>
     </div>
     <input id="importFile" type="file" accept=".json" style="display:none" onchange="importProject(event)">
   </div>
@@ -529,10 +529,10 @@ textarea {
 <div class="app-scale">
 <div class="layout">
   <aside class="sidebar">
-    <h2>Group Drafts</h2>
-    <div class="group-list" id="groupList"></div>
-    <div class="setup">
-      <h3>Group Setup (Saved)</h3>
+    <h2 title="Choose which group draft you are working on. The selected group controls the draft editor and Pull Doc action.">Group Drafts</h2>
+    <div class="group-list" id="groupList" title="Choose the active group here. Switching groups changes the draft box to that group's text."></div>
+    <div class="setup" title="Set each group's label, scene description, and Google Doc link. These settings are saved in your browser.">
+      <h3 title="Set each group's label, scene description, and Google Doc link. These settings are saved in your browser.">Group Setup (Saved)</h3>
       <div id="groupSetup"></div>
     </div>
   </aside>
