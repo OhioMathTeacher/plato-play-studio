@@ -336,6 +336,15 @@ textarea {
   text-transform: uppercase;
   margin: 0.45rem 0 0.25rem;
 }
+.script-tag-title {
+  text-align: center;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.86rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #5d4a2a;
+  margin: 0.55rem 0 0.35rem;
+}
 .script-char {
   font-family: 'DM Sans', sans-serif;
   font-size: 0.74rem;
@@ -609,13 +618,30 @@ function normalizeDraftText(txt) {
 }
 
 function normalizeSpeakerLine(line) {
-  const match = line.match(/^@\s*([^@]+?)\s*@\s*:?[ \t]*(.+)$/);
-  if (!match) return line;
+  const parsed = parseAtSpeaker(line);
+  if (!parsed) return line;
 
-  const speaker = match[1].replace(/\s*:\s*$/g, '').trim();
-  const dialogue = match[2].trim().replace(/\s{2,}/g, ' ');
+  const speaker = parsed.speaker.trim();
+  const dialogue = parsed.dialogue.trim().replace(/\s{2,}/g, ' ');
   if (!speaker || !dialogue) return line.trim();
   return `@${speaker}@ ${dialogue}`;
+}
+
+function parseAtSpeaker(t) {
+  const variants = [
+    /^@+\s*([^@]+?)\s*@+\s*:?[ \t]*(.+)$/,
+    /^@+\s*([^:]+?)\s*:[ \t]*(.+)$/
+  ];
+
+  for (const re of variants) {
+    const m = t.match(re);
+    if (!m) continue;
+    const speaker = m[1].replace(/\s*[:@]+\s*$/g, '').trim();
+    const dialogue = m[2].trim();
+    if (!speaker || !dialogue) continue;
+    return { speaker, dialogue };
+  }
+  return null;
 }
 
 function reformatDraftText(txt) {
@@ -776,10 +802,15 @@ function renderScriptHtml(raw) {
       return;
     }
 
-    const cue = t.match(/^\[\[(OPENING|TRANSITION_2|TRANSITION_3|CLOSING)\]\]$/i);
-    if (cue) {
-      const cueKey = cue[1].toUpperCase();
-      html.push(`<div class="script-cue">${escapeHtml(cueLabels[cueKey] || cueKey)}</div>`);
+    const bracketTag = t.match(/^\[\[\s*([^\]]+?)\s*\]\]$/);
+    if (bracketTag) {
+      const tag = bracketTag[1].trim();
+      const cueKey = tag.toUpperCase();
+      if (cueLabels[cueKey]) {
+        html.push(`<div class="script-cue">${escapeHtml(cueLabels[cueKey])}</div>`);
+      } else {
+        html.push(`<div class="script-tag-title">${formatInlineMarkup(tag)}</div>`);
+      }
       return;
     }
 
@@ -797,11 +828,10 @@ function renderScriptHtml(raw) {
       return;
     }
 
-    const atSpeaker = t.match(/^@\s*([^@]+?)\s*@\s*:?[ \t]*(.+)$/);
+    const atSpeaker = parseAtSpeaker(t);
     if (atSpeaker) {
-      const speaker = atSpeaker[1].replace(/\s*:\s*$/g, '').trim();
-      html.push(`<div class="script-char">${formatInlineMarkup(speaker)}</div>`);
-      html.push(`<div class="script-dialogue">${formatInlineMarkup(atSpeaker[2].trim())}</div>`);
+      html.push(`<div class="script-char">${formatInlineMarkup(atSpeaker.speaker)}</div>`);
+      html.push(`<div class="script-dialogue">${formatInlineMarkup(atSpeaker.dialogue)}</div>`);
       return;
     }
 
