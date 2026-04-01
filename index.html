@@ -446,7 +446,8 @@ textarea {
             <code>## Beat</code> for smaller headings<br>
             <code>[Lights dim.]</code> for stage directions<br>
             <code>SOCRATES: Dialogue text...</code> for dialogue<br>
-            <code>*Billy* Hello there...</code> for dialogue too
+            <code>@Billy@ Hey, what&#39;s *going on*?</code><br>
+            <code>@ Lisa: @ Not much. **Damn!**</code>
           </div>
           <div>
             <strong>Pair D Cue Markers (optional)</strong><br>
@@ -607,6 +608,33 @@ function normalizeDraftText(txt) {
     .trim();
 }
 
+function normalizeSpeakerLine(line) {
+  const match = line.match(/^@\s*([^@]+?)\s*@\s*:?[ \t]*(.+)$/);
+  if (!match) return line;
+
+  const speaker = match[1].replace(/\s*:\s*$/g, '').trim();
+  const dialogue = match[2].trim().replace(/\s{2,}/g, ' ');
+  if (!speaker || !dialogue) return line.trim();
+  return `@${speaker}@ ${dialogue}`;
+}
+
+function reformatDraftText(txt) {
+  const normalized = normalizeCueMarkers(normalizeDraftText(txt));
+  const lines = normalized.split('\n');
+  const out = [];
+
+  lines.forEach(line => {
+    const trimmed = line.trim();
+    if (!trimmed) {
+      if (out[out.length - 1] !== '') out.push('');
+      return;
+    }
+    out.push(normalizeSpeakerLine(trimmed));
+  });
+
+  return out.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+}
+
 function normalizeCueMarkers(txt) {
   return txt.replace(/\[\[\s*(opening|transition_2|transition_3|closing)\s*\]\]/gi, (_, marker) => {
     return `[[${marker.toUpperCase()}]]`;
@@ -667,14 +695,14 @@ async function loadCurrentGroupDoc() {
     return;
   }
 
-  sessionDrafts[state.currentGroup] = normalizeCueMarkers(normalizeDraftText(loadedText));
+  sessionDrafts[state.currentGroup] = reformatDraftText(loadedText);
   renderEditor();
   alert(`${group.label} draft loaded from Google Doc.`);
 }
 
 function reformatCurrentDraft() {
   const current = sessionDrafts[state.currentGroup] || '';
-  sessionDrafts[state.currentGroup] = normalizeCueMarkers(normalizeDraftText(current));
+  sessionDrafts[state.currentGroup] = reformatDraftText(current);
   renderEditor();
 }
 
@@ -769,17 +797,18 @@ function renderScriptHtml(raw) {
       return;
     }
 
+    const atSpeaker = t.match(/^@\s*([^@]+?)\s*@\s*:?[ \t]*(.+)$/);
+    if (atSpeaker) {
+      const speaker = atSpeaker[1].replace(/\s*:\s*$/g, '').trim();
+      html.push(`<div class="script-char">${formatInlineMarkup(speaker)}</div>`);
+      html.push(`<div class="script-dialogue">${formatInlineMarkup(atSpeaker[2].trim())}</div>`);
+      return;
+    }
+
     const m = t.match(/^([A-Z][A-Z0-9_\- ]{1,30}):\s*(.+)$/);
     if (m) {
       html.push(`<div class="script-char">${formatInlineMarkup(m[1])}</div>`);
       html.push(`<div class="script-dialogue">${formatInlineMarkup(m[2])}</div>`);
-      return;
-    }
-
-    const mdCharacter = t.match(/^\*{1,2}([^*]+)\*{1,2}\s*:?[ \t]*(.+)$/);
-    if (mdCharacter) {
-      html.push(`<div class="script-char">${formatInlineMarkup(mdCharacter[1])}</div>`);
-      html.push(`<div class="script-dialogue">${formatInlineMarkup(mdCharacter[2])}</div>`);
       return;
     }
 
