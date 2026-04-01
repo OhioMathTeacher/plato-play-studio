@@ -497,6 +497,7 @@ textarea {
           <div class="preview-head-right">
             <span class="sub" id="previewSub">Real script view</span>
             <button class="refresh-doc-btn" onclick="refreshCurrentGroupFromDoc()" title="Refresh this draft from linked Google Doc">Refresh</button>
+            <button class="refresh-doc-btn" onclick="reformatCurrentFromPreview()" title="Reformat the current draft text">Reformat</button>
           </div>
         </div>
         <div class="combine-actions" style="margin-bottom:0.4rem;">
@@ -510,12 +511,7 @@ textarea {
 
     <section class="draft-tools-bar">
       <div class="draft-tool-actions">
-        <div class="editor-actions">
-          <button class="editor-btn" onclick="loadCurrentGroupDoc()">Load Doc</button>
-          <button class="editor-btn" onclick="copyCurrentDraft()">Copy Draft</button>
-          <button class="editor-btn" onclick="reformatCurrentDraft()">Reformat</button>
-        </div>
-        <div class="editor-note">Scratch pad mode: edits here are temporary and not saved in your browser. Copy changes back into Google Docs.</div>
+        <div class="editor-note">Scratch pad mode: edits here are temporary and not saved in your browser. Copy what you need directly from the draft text box back into Google Docs.</div>
       </div>
       <div class="draft-tool-help">
         <div class="editor-tips">
@@ -811,20 +807,12 @@ async function refreshCurrentGroupFromDoc() {
 function reformatCurrentDraft() {
   const current = sessionDrafts[state.currentGroup] || '';
   sessionDrafts[state.currentGroup] = reformatDraftText(current);
+  previewMode = 'group';
   renderEditor();
 }
 
-function copyCurrentDraft() {
-  const txt = sessionDrafts[state.currentGroup] || '';
-  if (!txt.trim()) {
-    alert('No draft text to copy yet.');
-    return;
-  }
-  navigator.clipboard.writeText(txt).then(() => {
-    alert('Draft copied. Paste into your Google Doc.');
-  }).catch(() => {
-    alert('Clipboard blocked. Select and copy manually from the draft box.');
-  });
+function reformatCurrentFromPreview() {
+  reformatCurrentDraft();
 }
 
 function maybeWarnUnsavedDrafts() {
