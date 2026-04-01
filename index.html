@@ -17,6 +17,7 @@
   --line: #dacdaf;
   --card: #fffdf7;
   --accent: #7a3b10;
+  --ui-scale: 1;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
@@ -63,12 +64,31 @@ body {
 }
 .btn:hover { border-color: var(--cave-glow); color: #efe6d3; }
 .layout {
-  max-width: 1280px;
+  width: min(96vw, 1720px);
+  max-width: 1720px;
   margin: 0 auto;
   padding: 1rem;
   display: grid;
   grid-template-columns: 280px 1fr;
   gap: 0.9rem;
+}
+.app-scale {
+  width: calc(100% / var(--ui-scale));
+  transform: scale(var(--ui-scale));
+  transform-origin: top center;
+}
+.zoom-controls {
+  display: inline-flex;
+  gap: 0.35rem;
+  align-items: center;
+  margin-left: auto;
+}
+.zoom-label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.76rem;
+  color: #c8bfaf;
+  min-width: 58px;
+  text-align: center;
 }
 .sidebar,
 .panel {
@@ -352,10 +372,17 @@ textarea {
     <button class="btn" onclick="document.getElementById('importFile').click()">Import Project</button>
     <button class="btn" onclick="seedTemplates()">Load Starter Templates</button>
     <button class="btn" onclick="clearAllDrafts()">Clear Drafts</button>
+    <div class="zoom-controls">
+      <button class="btn" onclick="adjustZoom(-0.1)">-</button>
+      <div class="zoom-label" id="zoomLabel">100%</div>
+      <button class="btn" onclick="adjustZoom(0.1)">+</button>
+      <button class="btn" onclick="resetZoom()">Reset Zoom</button>
+    </div>
     <input id="importFile" type="file" accept=".json" style="display:none" onchange="importProject(event)">
   </div>
 </header>
 
+<div class="app-scale">
 <div class="layout">
   <aside class="sidebar">
     <h2>Group Drafts</h2>
@@ -425,6 +452,7 @@ textarea {
     </section>
   </main>
 </div>
+</div>
 
 <script>
 const STORAGE_KEY = 'plato_play_draft_studio_v1';
@@ -457,7 +485,8 @@ function normalizeState(raw) {
   const base = {
     currentGroup: 'A',
     groups: defaultGroups.map(g => ({ ...g })),
-    combinedScript: ''
+    combinedScript: '',
+    uiScale: 1
   };
   if (!raw) return base;
 
@@ -474,7 +503,8 @@ function normalizeState(raw) {
           };
         })
       : defaultGroups.map(g => ({ ...g })),
-    combinedScript: raw.combinedScript || ''
+    combinedScript: raw.combinedScript || '',
+    uiScale: typeof raw.uiScale === 'number' ? raw.uiScale : 1
   };
 
   if (!merged.groups.find(g => g.id === merged.currentGroup)) merged.currentGroup = 'A';
@@ -525,6 +555,25 @@ function updateGroupMeta(idx, field, value) {
   saveState();
   renderGroupButtons();
   renderEditor();
+}
+
+function renderZoom() {
+  const scale = Math.max(0.8, Math.min(1.35, state.uiScale || 1));
+  state.uiScale = scale;
+  document.documentElement.style.setProperty('--ui-scale', String(scale));
+  document.getElementById('zoomLabel').textContent = `${Math.round(scale * 100)}%`;
+}
+
+function adjustZoom(delta) {
+  state.uiScale = (state.uiScale || 1) + delta;
+  renderZoom();
+  saveState();
+}
+
+function resetZoom() {
+  state.uiScale = 1;
+  renderZoom();
+  saveState();
 }
 
 function normalizeDraftText(txt) {
@@ -823,6 +872,7 @@ function escapeHtml(s) {
 renderGroupButtons();
 renderGroupSetup();
 renderEditor();
+renderZoom();
 
 function escapeAttr(s) {
   return escapeHtml(s).replace(/`/g, '&#96;');
