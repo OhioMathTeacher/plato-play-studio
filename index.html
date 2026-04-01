@@ -530,7 +530,12 @@ textarea {
       <div class="editor-pane">
         <div class="panel-title">
           <h3 id="editorTitle">Triad A Draft</h3>
-          <span class="sub" id="editorScene">Scene 1</span>
+          <div class="preview-head-right">
+            <span class="sub" id="editorScene">Scene 1</span>
+            <button class="refresh-doc-btn" onclick="copyCurrentDraftToClipboard()" title="Copy draft text to clipboard">Copy</button>
+            <button class="refresh-doc-btn" onclick="refreshCurrentGroupFromDoc()" title="Pull latest text from this group's linked Google Doc">Sync Doc</button>
+            <button class="refresh-doc-btn" onclick="viewCombined()" title="Pull all Google Docs, combine, and show in formatted preview">View Combined</button>
+          </div>
         </div>
         <textarea id="draftEditor" placeholder="Write your group's script draft here..."></textarea>
       </div>
@@ -539,18 +544,11 @@ textarea {
           <h3>Formatted Script Preview</h3>
           <div class="preview-head-right">
             <span class="sub" id="previewSub">Real script view</span>
+            <button class="refresh-doc-btn" onclick="reformatCurrentFromPreview()" title="Reformat the draft text and refresh preview">Reformat</button>
+            <button class="refresh-doc-btn" onclick="downloadFormattedPreviewPdf()" title="Download what is currently shown as PDF">PDF</button>
           </div>
         </div>
         <div class="preview" id="groupPreview"></div>
-        <div class="combine-actions">
-          <button class="combine-btn" onclick="refreshCurrentGroupFromDoc()">Sync Doc</button>
-          <button class="combine-btn" onclick="reformatCurrentFromPreview()">Reformat</button>
-          <button class="combine-btn" onclick="showCurrentGroupPreview()">View Current</button>
-          <button class="combine-btn" onclick="combineDraftScripts()">Combine Draft Scripts</button>
-          <button class="combine-btn" onclick="showCombinedPreview()">View Combined</button>
-          <button class="combine-btn" onclick="copyCombinedScript()">Copy Combined</button>
-          <button class="combine-btn" onclick="downloadFormattedPreviewPdf()">Download as PDF</button>
-        </div>
       </div>
     </section>
 
@@ -856,6 +854,23 @@ async function loadCurrentGroupDoc() {
 
 async function refreshCurrentGroupFromDoc() {
   await loadCurrentGroupDoc();
+}
+
+function copyCurrentDraftToClipboard() {
+  const txt = sessionDrafts[state.currentGroup] || '';
+  if (!txt.trim()) {
+    alert('No draft text to copy yet.');
+    return;
+  }
+  navigator.clipboard.writeText(txt).then(() => {
+    alert('Draft copied to clipboard.');
+  }).catch(() => {
+    alert('Clipboard blocked. Select and copy manually from the draft box.');
+  });
+}
+
+async function viewCombined() {
+  await combineDraftScripts();
 }
 
 function reformatCurrentDraft() {
