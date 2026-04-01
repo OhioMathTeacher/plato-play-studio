@@ -186,6 +186,23 @@ body {
   align-items: baseline;
   margin-bottom: 0.5rem;
 }
+.editor-actions {
+  display: flex;
+  gap: 0.4rem;
+  margin-bottom: 0.5rem;
+}
+.editor-btn {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  border-radius: 6px;
+  border: 1px solid #c8b188;
+  background: #efe1c7;
+  color: #3b2b16;
+  padding: 0.32rem 0.58rem;
+  cursor: pointer;
+}
+.editor-btn:hover { background: #e6d4b3; }
 .panel-title h3 {
   font-size: 1.1rem;
   font-weight: 500;
@@ -207,6 +224,7 @@ textarea {
   font-size: 0.84rem;
   line-height: 1.5;
   resize: vertical;
+  overflow-y: scroll;
 }
 .preview {
   min-height: 460px;
@@ -214,7 +232,17 @@ textarea {
   border-radius: 9px;
   padding: 0.8rem;
   background: #fffcf3;
-  overflow: auto;
+  overflow-y: scroll;
+}
+.editor-note {
+  margin-bottom: 0.45rem;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.69rem;
+  color: #8a4a1d;
+  background: #fff0da;
+  border: 1px solid #e3c392;
+  border-radius: 6px;
+  padding: 0.35rem 0.45rem;
 }
 .script-line { margin-bottom: 0.45rem; }
 .script-heading {
@@ -315,6 +343,12 @@ textarea {
           <h3 id="editorTitle">Triad A Draft</h3>
           <span class="sub" id="editorScene">Scene 1</span>
         </div>
+        <div class="editor-actions">
+          <button class="editor-btn" onclick="loadCurrentGroupDoc()">Load Doc</button>
+          <button class="editor-btn" onclick="copyCurrentDraft()">Copy Draft</button>
+          <button class="editor-btn" onclick="reformatCurrentDraft()">Reformat</button>
+        </div>
+        <div class="editor-note">Scratch pad mode: edits here are temporary and not saved in your browser. Copy changes back into Google Docs.</div>
         <textarea id="draftEditor" placeholder="Write your group's script draft here..."></textarea>
       </div>
       <div>
@@ -351,6 +385,8 @@ const defaultGroups = [
 ];
 
 let state = normalizeState(loadState());
+let sessionDrafts = { A: '', B: '', C: '', D: '' };
+let warnedUnsaved = false;
 
 function saveState() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -369,7 +405,6 @@ function normalizeState(raw) {
   const base = {
     currentGroup: 'A',
     groups: defaultGroups.map(g => ({ ...g })),
-    drafts: { A: '', B: '', C: '', D: '' },
     combinedScript: ''
   };
   if (!raw) return base;
@@ -387,7 +422,6 @@ function normalizeState(raw) {
           };
         })
       : defaultGroups.map(g => ({ ...g })),
-    drafts: { ...base.drafts, ...(raw.drafts || {}) },
     combinedScript: raw.combinedScript || ''
   };
 
@@ -441,6 +475,84 @@ function updateGroupMeta(idx, field, value) {
   renderEditor();
 }
 
+function normalizeDraftText(txt) {
+  return txt
+    .replace(/\r\n?/g, '\n')
+    .split('\n')
+    .map(line => line.replace(/\s+$/g, ''))
+    .join('\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
+function docExportUrl(rawUrl) {
+  if (!rawUrl) return null;
+  const m = String(rawUrl).match(/\/document\/d\/([a-zA-Z0-9-_]+)/);
+  if (!m) return null;
+  return `https://docs.google.com/document/d/${m[1]}/export?format=txt`;
+}
+
+async function loadCurrentGroupDoc() {
+  const group = groupById(state.currentGroup);
+  const exportUrl = docExportUrl(group.docUrl || '');
+  if (!exportUrl) {
+    alert('Add a valid Google Doc link in Group Setup first.');
+    return;
+  }
+
+  const proxyUrl = `https://r.jina.ai/http://${exportUrl.replace(/^https?:\/\//, '')}`;
+  const candidates = [exportUrl, proxyUrl];
+  let loadedText = '';
+
+  for (const url of candidates) {
+    try {
+      const res = await fetch(url);
+      if (!res.ok) continue;
+      const txt = await res.text();
+      if (!txt || txt.length < 8) continue;
+      loadedText = txt;
+      break;
+    } catch (err) {
+      // Try next candidate URL.
+    }
+  }
+
+  if (!loadedText) {
+    window.open(exportUrl, '_blank', 'noopener');
+    alert('Could not auto-load the doc text (likely sharing/CORS). I opened the plain-text export in a new tab; copy/paste it here.');
+    return;
+  }
+
+  sessionDrafts[state.currentGroup] = normalizeDraftText(loadedText);
+  renderEditor();
+  alert(`${group.label} draft loaded from Google Doc.`);
+}
+
+function reformatCurrentDraft() {
+  const current = sessionDrafts[state.currentGroup] || '';
+  sessionDrafts[state.currentGroup] = normalizeDraftText(current);
+  renderEditor();
+}
+
+function copyCurrentDraft() {
+  const txt = sessionDrafts[state.currentGroup] || '';
+  if (!txt.trim()) {
+    alert('No draft text to copy yet.');
+    return;
+  }
+  navigator.clipboard.writeText(txt).then(() => {
+    alert('Draft copied. Paste into your Google Doc.');
+  }).catch(() => {
+    alert('Clipboard blocked. Select and copy manually from the draft box.');
+  });
+}
+
+function maybeWarnUnsavedDrafts() {
+  if (warnedUnsaved) return;
+  warnedUnsaved = true;
+  alert('Draft window is temporary scratch space. It does not auto-save locally. Copy important edits back into Google Docs.');
+}
+
 function renderEditor() {
   const group = groupById(state.currentGroup);
   document.getElementById('editorTitle').textContent = group.label + ' Draft';
@@ -451,11 +563,11 @@ function renderEditor() {
   }
 
   const editor = document.getElementById('draftEditor');
-  editor.placeholder = `Write ${group.label}'s working draft here (this box is editable and saved in the app).`;
-  editor.value = state.drafts[state.currentGroup] || '';
+  editor.placeholder = `Write ${group.label}'s working draft here (temporary scratch mode).`;
+  editor.value = sessionDrafts[state.currentGroup] || '';
+  editor.onfocus = maybeWarnUnsavedDrafts;
   editor.oninput = () => {
-    state.drafts[state.currentGroup] = editor.value;
-    saveState();
+    sessionDrafts[state.currentGroup] = editor.value;
     renderGroupPreview();
   };
 
@@ -464,7 +576,7 @@ function renderEditor() {
 }
 
 function renderGroupPreview() {
-  const txt = state.drafts[state.currentGroup] || '';
+  const txt = sessionDrafts[state.currentGroup] || '';
   document.getElementById('groupPreview').innerHTML = renderScriptHtml(txt);
 }
 
@@ -539,10 +651,10 @@ function section(title, body) {
 }
 
 function combineDraftScripts() {
-  const a = state.drafts.A || '';
-  const b = state.drafts.B || '';
-  const c = state.drafts.C || '';
-  const d = state.drafts.D || '';
+  const a = sessionDrafts.A || '';
+  const b = sessionDrafts.B || '';
+  const c = sessionDrafts.C || '';
+  const d = sessionDrafts.D || '';
   const gA = groupById('A');
   const gB = groupById('B');
   const gC = groupById('C');
@@ -588,7 +700,8 @@ function exportProject() {
     exportedAt: new Date().toISOString(),
     app: 'Plato Play Draft Studio',
     version: 1,
-    state
+    state,
+    sessionDrafts
   };
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
@@ -608,8 +721,9 @@ function importProject(event) {
   reader.onload = (e) => {
     try {
       const payload = JSON.parse(e.target.result);
-      if (!payload.state || !payload.state.drafts) throw new Error('Invalid project file.');
+      if (!payload.state) throw new Error('Invalid project file.');
       state = normalizeState(payload.state);
+      sessionDrafts = { A: '', B: '', C: '', D: '', ...(payload.sessionDrafts || {}) };
       saveState();
       renderGroupButtons();
       renderGroupSetup();
@@ -625,20 +739,20 @@ function importProject(event) {
 
 function clearAllDrafts() {
   if (!confirm('Clear all group drafts and combined script?')) return;
-  state.drafts = { A: '', B: '', C: '', D: '' };
+  sessionDrafts = { A: '', B: '', C: '', D: '' };
   state.combinedScript = '';
   saveState();
   renderEditor();
 }
 
 function seedTemplates() {
-  state.drafts.A = `# Scene 1\n[Dim light. Prisoners face wall.]\n\nSOCRATES: Imagine people chained in a cave since childhood.\nGLAUCON: They see only shadows, then?\nSOCRATES: Yes. They take shadows for reality.`;
+  sessionDrafts.A = `# Scene 1\n[Dim light. Prisoners face wall.]\n\nSOCRATES: Imagine people chained in a cave since childhood.\nGLAUCON: They see only shadows, then?\nSOCRATES: Yes. They take shadows for reality.`;
 
-  state.drafts.B = `# Scene 2\n[Freed prisoner climbs toward bright light.]\n\nPRISONER: My eyes hurt. Everything is too bright.\nGUIDE: Stay with it. You are seeing more clearly now.`;
+  sessionDrafts.B = `# Scene 2\n[Freed prisoner climbs toward bright light.]\n\nPRISONER: My eyes hurt. Everything is too bright.\nGUIDE: Stay with it. You are seeing more clearly now.`;
 
-  state.drafts.C = `# Scene 3\n[Prisoner returns to cave.]\n\nPRISONER: You are watching shadows, not the real things.\nPRISONER IN CAVE: Your eyes are ruined. We trust what we see here.`;
+  sessionDrafts.C = `# Scene 3\n[Prisoner returns to cave.]\n\nPRISONER: You are watching shadows, not the real things.\nPRISONER IN CAVE: Your eyes are ruined. We trust what we see here.`;
 
-  state.drafts.D = `[[OPENING]]\nNARRATOR: Tonight, we enter Plato's cave.\n\n[[TRANSITION_2]]\nNARRATOR: The journey upward begins in pain.\n\n[[TRANSITION_3]]\nNARRATOR: Now the traveler returns to those still chained.\n\n[[CLOSING]]\nNARRATOR: The question remains: what shadows still govern us?`;
+  sessionDrafts.D = `[[OPENING]]\nNARRATOR: Tonight, we enter Plato's cave.\n\n[[TRANSITION_2]]\nNARRATOR: The journey upward begins in pain.\n\n[[TRANSITION_3]]\nNARRATOR: Now the traveler returns to those still chained.\n\n[[CLOSING]]\nNARRATOR: The question remains: what shadows still govern us?`;
 
   if (!state.currentGroup) state.currentGroup = 'A';
   saveState();
