@@ -271,8 +271,8 @@ body {
 }
 textarea {
   width: 100%;
-  height: 600px;
-  min-height: 600px;
+  height: 760px;
+  min-height: 760px;
   border: 1px solid var(--line);
   border-radius: 9px;
   background: #fffdfa;
@@ -286,8 +286,8 @@ textarea {
   scrollbar-gutter: stable;
 }
 .preview {
-  height: 600px;
-  min-height: 600px;
+  height: 760px;
+  min-height: 760px;
   border: 1px solid var(--line);
   border-radius: 9px;
   padding: 0.8rem;
@@ -533,7 +533,7 @@ textarea {
           <div class="preview-head-right">
             <span class="sub" id="editorScene">Scene 1</span>
             <button class="refresh-doc-btn" onclick="copyCurrentDraftToClipboard()" title="Copy draft text to clipboard">Copy</button>
-            <button class="refresh-doc-btn" onclick="refreshCurrentGroupFromDoc()" title="Pull latest text from this group's linked Google Doc">Sync Doc</button>
+            <button class="refresh-doc-btn" onclick="refreshCurrentGroupFromDoc()" title="Pull latest text from this group's linked Google Doc">Pull Doc</button>
             <button class="refresh-doc-btn" onclick="viewCombined()" title="Pull all Google Docs, combine, and show in formatted preview">View Combined</button>
           </div>
         </div>
@@ -857,7 +857,9 @@ async function refreshCurrentGroupFromDoc() {
 }
 
 function copyCurrentDraftToClipboard() {
-  const txt = sessionDrafts[state.currentGroup] || '';
+  const txt = previewMode === 'combined'
+    ? (state.combinedScript || '')
+    : (sessionDrafts[state.currentGroup] || '');
   if (!txt.trim()) {
     alert('No draft text to copy yet.');
     return;
@@ -874,9 +876,12 @@ async function viewCombined() {
 }
 
 function reformatCurrentDraft() {
-  const current = sessionDrafts[state.currentGroup] || '';
-  sessionDrafts[state.currentGroup] = reformatDraftText(current);
-  previewMode = 'group';
+  if (previewMode === 'combined') {
+    state.combinedScript = reformatDraftText(state.combinedScript || '');
+  } else {
+    const current = sessionDrafts[state.currentGroup] || '';
+    sessionDrafts[state.currentGroup] = reformatDraftText(current);
+  }
   renderEditor();
 }
 
@@ -892,19 +897,32 @@ function maybeWarnUnsavedDrafts() {
 
 function renderEditor() {
   const group = groupById(state.currentGroup);
-  document.getElementById('editorTitle').textContent = group.label + ' Draft';
-  if (group.docUrl && /^https?:\/\//i.test(group.docUrl)) {
-    document.getElementById('editorScene').innerHTML = `<a href="${escapeAttr(group.docUrl)}" target="_blank" rel="noopener">${escapeHtml(group.scene)} (Open Doc)</a>`;
+  if (previewMode === 'combined') {
+    document.getElementById('editorTitle').textContent = 'Combined Draft';
+    document.getElementById('editorScene').textContent = 'All linked Google Docs';
   } else {
-    document.getElementById('editorScene').textContent = group.scene;
+    document.getElementById('editorTitle').textContent = group.label + ' Draft';
+    if (group.docUrl && /^https?:\/\//i.test(group.docUrl)) {
+      document.getElementById('editorScene').innerHTML = `<a href="${escapeAttr(group.docUrl)}" target="_blank" rel="noopener">${escapeHtml(group.scene)} (Open Doc)</a>`;
+    } else {
+      document.getElementById('editorScene').textContent = group.scene;
+    }
   }
 
   const editor = document.getElementById('draftEditor');
-  editor.placeholder = `Write ${group.label}'s working draft here (temporary scratch mode).`;
-  editor.value = sessionDrafts[state.currentGroup] || '';
+  editor.placeholder = previewMode === 'combined'
+    ? 'Combined script appears here after View Combined.'
+    : `Write ${group.label}'s working draft here (temporary scratch mode).`;
+  editor.value = previewMode === 'combined'
+    ? (state.combinedScript || '')
+    : (sessionDrafts[state.currentGroup] || '');
   editor.onfocus = maybeWarnUnsavedDrafts;
   editor.oninput = () => {
-    sessionDrafts[state.currentGroup] = editor.value;
+    if (previewMode === 'combined') {
+      state.combinedScript = editor.value;
+    } else {
+      sessionDrafts[state.currentGroup] = editor.value;
+    }
     renderGroupPreview();
   };
 
@@ -1092,7 +1110,7 @@ async function combineDraftScripts() {
   state.combinedScript = pieces.filter(Boolean).join('\n');
   previewMode = 'combined';
   saveState();
-  renderGroupPreview();
+  renderEditor();
 
   let msg = 'Combined script updated from current drafts.';
   if (loadedGroups.length) msg += ` Loaded fresh Google Doc text for: ${loadedGroups.join(', ')}.`;
