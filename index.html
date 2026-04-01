@@ -178,6 +178,11 @@ body {
   gap: 0.75rem;
   align-items: start;
 }
+.editor-pane {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
 .panel {
   padding: 0.85rem;
 }
@@ -225,8 +230,9 @@ textarea {
   font-family: 'DM Sans', sans-serif;
   font-size: 0.84rem;
   line-height: 1.5;
-  resize: vertical;
-  overflow-y: scroll;
+  resize: none;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
 }
 .preview {
   height: 460px;
@@ -235,7 +241,9 @@ textarea {
   border-radius: 9px;
   padding: 0.8rem;
   background: #fffcf3;
-  overflow-y: scroll;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-gutter: stable;
 }
 .editor-note {
   font-family: 'DM Sans', sans-serif;
@@ -360,14 +368,14 @@ textarea {
 
   <main class="main">
     <section class="panel editor-wrap">
-      <div>
+      <div class="editor-pane">
         <div class="panel-title">
           <h3 id="editorTitle">Triad A Draft</h3>
           <span class="sub" id="editorScene">Scene 1</span>
         </div>
         <textarea id="draftEditor" placeholder="Write your group's script draft here..."></textarea>
       </div>
-      <div>
+      <div class="editor-pane">
         <div class="panel-title">
           <h3>Formatted Script Preview</h3>
           <span class="sub">Real script view</span>
