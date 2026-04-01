@@ -607,6 +607,28 @@ function normalizeDraftText(txt) {
     .trim();
 }
 
+function normalizeCueMarkers(txt) {
+  return txt.replace(/\[\[\s*(opening|transition_2|transition_3|closing)\s*\]\]/gi, (_, marker) => {
+    return `[[${marker.toUpperCase()}]]`;
+  });
+}
+
+function applySmartTypography(txt) {
+  return txt
+    .replace(/---/g, '---')
+    .replace(/\.\.\./g, '...')
+    .replace(/(^|[\s\(\[{])"([^"\n]+)"/g, '$1“$2”')
+    .replace(/(^|[\s\(\[{])'([^'\n]+)'/g, '$1‘$2’')
+    .replace(/(\w)'(\w)/g, '$1’$2');
+}
+
+function formatInlineMarkup(txt) {
+  let html = escapeHtml(applySmartTypography(txt));
+  html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+  return html;
+}
+
 function docExportUrl(rawUrl) {
   if (!rawUrl) return null;
   const m = String(rawUrl).match(/\/document\/d\/([a-zA-Z0-9-_]+)/);
@@ -645,14 +667,14 @@ async function loadCurrentGroupDoc() {
     return;
   }
 
-  sessionDrafts[state.currentGroup] = normalizeDraftText(loadedText);
+  sessionDrafts[state.currentGroup] = normalizeCueMarkers(normalizeDraftText(loadedText));
   renderEditor();
   alert(`${group.label} draft loaded from Google Doc.`);
 }
 
 function reformatCurrentDraft() {
   const current = sessionDrafts[state.currentGroup] || '';
-  sessionDrafts[state.currentGroup] = normalizeDraftText(current);
+  sessionDrafts[state.currentGroup] = normalizeCueMarkers(normalizeDraftText(current));
   renderEditor();
 }
 
@@ -726,41 +748,42 @@ function renderScriptHtml(raw) {
       return;
     }
 
-    const cue = t.match(/^\[\[(OPENING|TRANSITION_2|TRANSITION_3|CLOSING)\]\]$/);
+    const cue = t.match(/^\[\[(OPENING|TRANSITION_2|TRANSITION_3|CLOSING)\]\]$/i);
     if (cue) {
-      html.push(`<div class="script-cue">${escapeHtml(cueLabels[cue[1]] || cue[1])}</div>`);
+      const cueKey = cue[1].toUpperCase();
+      html.push(`<div class="script-cue">${escapeHtml(cueLabels[cueKey] || cueKey)}</div>`);
       return;
     }
 
     if (t.startsWith('#')) {
       if (t.startsWith('##')) {
-        html.push(`<div class="script-subheading">${escapeHtml(t.replace(/^##+\s*/, ''))}</div>`);
+        html.push(`<div class="script-subheading">${formatInlineMarkup(t.replace(/^##+\s*/, ''))}</div>`);
       } else {
-        html.push(`<div class="script-heading">${escapeHtml(t.replace(/^#+\s*/, ''))}</div>`);
+        html.push(`<div class="script-heading">${formatInlineMarkup(t.replace(/^#+\s*/, ''))}</div>`);
       }
       return;
     }
 
     if ((t.startsWith('[') && t.endsWith(']')) || (t.startsWith('(') && t.endsWith(')'))) {
-      html.push(`<div class="script-stage">${escapeHtml(t)}</div>`);
+      html.push(`<div class="script-stage">${formatInlineMarkup(t)}</div>`);
       return;
     }
 
     const m = t.match(/^([A-Z][A-Z0-9_\- ]{1,30}):\s*(.+)$/);
     if (m) {
-      html.push(`<div class="script-char">${escapeHtml(m[1])}</div>`);
-      html.push(`<div class="script-dialogue">${escapeHtml(m[2])}</div>`);
+      html.push(`<div class="script-char">${formatInlineMarkup(m[1])}</div>`);
+      html.push(`<div class="script-dialogue">${formatInlineMarkup(m[2])}</div>`);
       return;
     }
 
     const mdCharacter = t.match(/^\*{1,2}([^*]+)\*{1,2}\s*:?[ \t]*(.+)$/);
     if (mdCharacter) {
-      html.push(`<div class="script-char">${escapeHtml(mdCharacter[1])}</div>`);
-      html.push(`<div class="script-dialogue">${escapeHtml(mdCharacter[2])}</div>`);
+      html.push(`<div class="script-char">${formatInlineMarkup(mdCharacter[1])}</div>`);
+      html.push(`<div class="script-dialogue">${formatInlineMarkup(mdCharacter[2])}</div>`);
       return;
     }
 
-    html.push(`<div class="script-line">${escapeHtml(t)}</div>`);
+    html.push(`<div class="script-line">${formatInlineMarkup(t)}</div>`);
   });
 
   return html.join('');
