@@ -312,11 +312,29 @@ textarea {
   margin: 0.8rem 0 0.5rem;
   color: #40372a;
 }
+.script-subheading {
+  text-align: center;
+  font-family: 'DM Sans', sans-serif;
+  letter-spacing: 0.08em;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  margin: 0.55rem 0 0.35rem;
+  color: #7a6b58;
+}
 .script-stage {
   text-align: center;
   color: #6c6253;
   font-style: italic;
   margin: 0.5rem 0;
+}
+.script-cue {
+  text-align: center;
+  color: #8f6a26;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin: 0.45rem 0 0.25rem;
 }
 .script-char {
   font-family: 'DM Sans', sans-serif;
@@ -425,11 +443,14 @@ textarea {
           <div>
             <strong>Script Format Tips</strong><br>
             <code># Scene 1</code> for headings<br>
+            <code>## Beat</code> for smaller headings<br>
             <code>[Lights dim.]</code> for stage directions<br>
-            <code>SOCRATES: Dialogue text...</code> for dialogue
+            <code>SOCRATES: Dialogue text...</code> for dialogue<br>
+            <code>*Billy* Hello there...</code> for dialogue too
           </div>
           <div>
             <strong>Pair D Cue Markers (optional)</strong><br>
+            These render cleanly in preview:<br>
             <code>[[OPENING]]</code><br>
             <code>[[TRANSITION_2]]</code><br>
             <code>[[TRANSITION_3]]</code><br>
@@ -691,6 +712,12 @@ function renderScriptHtml(raw) {
 
   const lines = raw.split('\n');
   const html = [];
+  const cueLabels = {
+    OPENING: 'Narrator Opening',
+    TRANSITION_2: 'Transition to Scene 2',
+    TRANSITION_3: 'Transition to Scene 3',
+    CLOSING: 'Narrator Closing'
+  };
 
   lines.forEach(line => {
     const t = line.trim();
@@ -699,8 +726,18 @@ function renderScriptHtml(raw) {
       return;
     }
 
+    const cue = t.match(/^\[\[(OPENING|TRANSITION_2|TRANSITION_3|CLOSING)\]\]$/);
+    if (cue) {
+      html.push(`<div class="script-cue">${escapeHtml(cueLabels[cue[1]] || cue[1])}</div>`);
+      return;
+    }
+
     if (t.startsWith('#')) {
-      html.push(`<div class="script-heading">${escapeHtml(t.replace(/^#+\s*/, ''))}</div>`);
+      if (t.startsWith('##')) {
+        html.push(`<div class="script-subheading">${escapeHtml(t.replace(/^##+\s*/, ''))}</div>`);
+      } else {
+        html.push(`<div class="script-heading">${escapeHtml(t.replace(/^#+\s*/, ''))}</div>`);
+      }
       return;
     }
 
@@ -713,6 +750,13 @@ function renderScriptHtml(raw) {
     if (m) {
       html.push(`<div class="script-char">${escapeHtml(m[1])}</div>`);
       html.push(`<div class="script-dialogue">${escapeHtml(m[2])}</div>`);
+      return;
+    }
+
+    const mdCharacter = t.match(/^\*{1,2}([^*]+)\*{1,2}\s*:?[ \t]*(.+)$/);
+    if (mdCharacter) {
+      html.push(`<div class="script-char">${escapeHtml(mdCharacter[1])}</div>`);
+      html.push(`<div class="script-dialogue">${escapeHtml(mdCharacter[2])}</div>`);
       return;
     }
 
