@@ -247,6 +247,28 @@ body {
   font-size: 0.72rem;
   color: var(--muted);
 }
+.preview-head-right {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.refresh-doc-btn {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.68rem;
+  border: 1px solid #dcccae;
+  background: #fbf5e9;
+  color: #84735a;
+  border-radius: 999px;
+  padding: 0.14rem 0.42rem;
+  cursor: pointer;
+  opacity: 0.62;
+  transition: opacity 120ms ease, background 120ms ease, color 120ms ease;
+}
+.refresh-doc-btn:hover {
+  opacity: 0.95;
+  background: #f3e4c6;
+  color: #5f4b2b;
+}
 textarea {
   width: 100%;
   height: 460px;
@@ -472,7 +494,10 @@ textarea {
       <div class="editor-pane">
         <div class="panel-title">
           <h3>Formatted Script Preview</h3>
-          <span class="sub" id="previewSub">Real script view</span>
+          <div class="preview-head-right">
+            <span class="sub" id="previewSub">Real script view</span>
+            <button class="refresh-doc-btn" onclick="refreshCurrentGroupFromDoc()" title="Refresh this draft from linked Google Doc">Refresh</button>
+          </div>
         </div>
         <div class="combine-actions" style="margin-bottom:0.4rem;">
           <button class="combine-btn" onclick="showCurrentGroupPreview()">View Current Group</button>
@@ -777,6 +802,10 @@ async function loadCurrentGroupDoc() {
   previewMode = 'group';
   renderEditor();
   alert(`${group.label} draft loaded from Google Doc.`);
+}
+
+async function refreshCurrentGroupFromDoc() {
+  await loadCurrentGroupDoc();
 }
 
 function reformatCurrentDraft() {
