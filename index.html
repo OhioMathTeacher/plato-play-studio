@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>Plato Play Draft Studio</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -42,6 +45,12 @@ body {
   color: #9f9484;
   font-size: 0.83rem;
   margin-top: 0.2rem;
+}
+.build-stamp {
+  font-family: 'DM Sans', sans-serif;
+  color: #8b806f;
+  font-size: 0.68rem;
+  margin-top: 0.1rem;
 }
 .toolbar {
   margin-top: 0.7rem;
@@ -424,6 +433,7 @@ textarea {
 <header class="header">
   <h1>Plato Play Draft Studio</h1>
   <p>Script drafting only: group drafts, shared visibility, and one-click combined script for table read.</p>
+  <div class="build-stamp">Build: 2026-04-01-r3</div>
   <div class="toolbar">
     <button class="btn" onclick="exportProject()">Export Project</button>
     <button class="btn" onclick="document.getElementById('importFile').click()">Import Project</button>
@@ -462,7 +472,12 @@ textarea {
       <div class="editor-pane">
         <div class="panel-title">
           <h3>Formatted Script Preview</h3>
-          <span class="sub">Real script view</span>
+          <span class="sub" id="previewSub">Real script view</span>
+        </div>
+        <div class="combine-actions" style="margin-bottom:0.4rem;">
+          <button class="combine-btn" onclick="showCurrentGroupPreview()">View Current Group</button>
+          <button class="combine-btn" onclick="showCombinedPreview()">View Combined</button>
+          <button class="combine-btn" onclick="downloadFormattedPreviewPdf()">Download as PDF</button>
         </div>
         <div class="preview" id="groupPreview"></div>
       </div>
@@ -529,6 +544,7 @@ const defaultGroups = [
 let state = normalizeState(loadState());
 let sessionDrafts = { A: '', B: '', C: '', D: '' };
 let warnedUnsaved = false;
+let previewMode = 'group';
 
 function saveState() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -721,17 +737,12 @@ function docExportUrl(rawUrl) {
   return `https://docs.google.com/document/d/${m[1]}/export?format=txt`;
 }
 
-async function loadCurrentGroupDoc() {
-  const group = groupById(state.currentGroup);
-  const exportUrl = docExportUrl(group.docUrl || '');
-  if (!exportUrl) {
-    alert('Add a valid Google Doc link in Group Setup first.');
-    return;
-  }
+async function fetchDocDraftText(rawDocUrl) {
+  const exportUrl = docExportUrl(rawDocUrl || '');
+  if (!exportUrl) return { ok: false, reason: 'invalid-url', exportUrl: null };
 
   const proxyUrl = `https://r.jina.ai/http://${exportUrl.replace(/^https?:\/\//, '')}`;
   const candidates = [exportUrl, proxyUrl];
-  let loadedText = '';
 
   for (const url of candidates) {
     try {
@@ -739,20 +750,31 @@ async function loadCurrentGroupDoc() {
       if (!res.ok) continue;
       const txt = await res.text();
       if (!txt || txt.length < 8) continue;
-      loadedText = txt;
-      break;
+      return { ok: true, text: txt, exportUrl };
     } catch (err) {
       // Try next candidate URL.
     }
   }
 
-  if (!loadedText) {
-    window.open(exportUrl, '_blank', 'noopener');
+  return { ok: false, reason: 'fetch-failed', exportUrl };
+}
+
+async function loadCurrentGroupDoc() {
+  const group = groupById(state.currentGroup);
+  const result = await fetchDocDraftText(group.docUrl || '');
+  if (!result.exportUrl) {
+    alert('Add a valid Google Doc link in Group Setup first.');
+    return;
+  }
+
+  if (!result.ok) {
+    window.open(result.exportUrl, '_blank', 'noopener');
     alert('Could not auto-load the doc text (likely sharing/CORS). I opened the plain-text export in a new tab; copy/paste it here.');
     return;
   }
 
-  sessionDrafts[state.currentGroup] = reformatDraftText(loadedText);
+  sessionDrafts[state.currentGroup] = reformatDraftText(result.text);
+  previewMode = 'group';
   renderEditor();
   alert(`${group.label} draft loaded from Google Doc.`);
 }
@@ -804,8 +826,32 @@ function renderEditor() {
 }
 
 function renderGroupPreview() {
+  const sub = document.getElementById('previewSub');
+  const preview = document.getElementById('groupPreview');
+
+  if (previewMode === 'combined') {
+    sub.textContent = 'Combined script preview';
+    preview.innerHTML = renderScriptHtml(state.combinedScript || '');
+    return;
+  }
+
   const txt = sessionDrafts[state.currentGroup] || '';
-  document.getElementById('groupPreview').innerHTML = renderScriptHtml(txt);
+  sub.textContent = 'Real script view';
+  preview.innerHTML = renderScriptHtml(txt);
+}
+
+function showCurrentGroupPreview() {
+  previewMode = 'group';
+  renderGroupPreview();
+}
+
+function showCombinedPreview() {
+  if (!(state.combinedScript || '').trim()) {
+    alert('No combined script yet. Click Combine Draft Scripts first.');
+    return;
+  }
+  previewMode = 'combined';
+  renderGroupPreview();
 }
 
 function renderScriptHtml(raw) {
@@ -914,7 +960,23 @@ function section(title, body) {
   return `# ${title}\n${trimmed}\n`;
 }
 
-function combineDraftScripts() {
+async function combineDraftScripts() {
+  const loadedGroups = [];
+  const failedGroups = [];
+  const groupIds = ['A', 'B', 'C', 'D'];
+
+  for (const id of groupIds) {
+    const g = groupById(id);
+    if (!g || !g.docUrl) continue;
+    const result = await fetchDocDraftText(g.docUrl);
+    if (result.ok) {
+      sessionDrafts[id] = reformatDraftText(result.text);
+      loadedGroups.push(g.label);
+    } else {
+      failedGroups.push(g.label);
+    }
+  }
+
   const a = sessionDrafts.A || '';
   const b = sessionDrafts.B || '';
   const c = sessionDrafts.C || '';
@@ -942,8 +1004,14 @@ function combineDraftScripts() {
   if (nb.CLOSING.trim()) pieces.push(section('Narrator Closing', nb.CLOSING));
 
   state.combinedScript = pieces.filter(Boolean).join('\n');
+  previewMode = 'combined';
   saveState();
-  alert('Combined script updated.');
+  renderGroupPreview();
+
+  let msg = 'Combined script updated from current drafts.';
+  if (loadedGroups.length) msg += ` Loaded fresh Google Doc text for: ${loadedGroups.join(', ')}.`;
+  if (failedGroups.length) msg += ` Could not auto-load: ${failedGroups.join(', ')}.`;
+  alert(msg);
 }
 
 function copyCombinedScript() {
@@ -986,6 +1054,42 @@ function downloadCombinedPdf() {
 
   w.document.open();
   w.document.write(`<!doctype html><html><head><title>Combined Script</title><style>${css}</style></head><body>${renderScriptHtml(txt)}</body></html>`);
+  w.document.close();
+  w.focus();
+  setTimeout(() => w.print(), 250);
+}
+
+function downloadFormattedPreviewPdf() {
+  const usingCombined = previewMode === 'combined';
+  const txt = usingCombined ? (state.combinedScript || '') : (sessionDrafts[state.currentGroup] || '');
+  if (!txt.trim()) {
+    alert('No script text to export yet.');
+    return;
+  }
+
+  const group = groupById(state.currentGroup);
+  const title = usingCombined ? 'Combined Script' : `${group.label} Draft`;
+
+  const w = window.open('', '_blank');
+  if (!w) {
+    alert('Popup blocked. Please allow popups for this site to export PDF.');
+    return;
+  }
+
+  const css = `
+    body { font-family: Georgia, serif; margin: 28px; color: #222; line-height: 1.55; }
+    .script-h1,.script-h2,.script-h3,.script-heading,.script-subheading,.script-cue,.script-tag-title { text-align: center; margin: 14px 0 8px; font-weight: 700; }
+    .script-h1 { font-size: 22px; }
+    .script-h2 { font-size: 18px; }
+    .script-h3 { font-size: 15px; }
+    .script-char { margin-top: 10px; font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase; }
+    .script-dialogue { margin-left: 18px; margin-bottom: 6px; }
+    .script-stage { text-align: center; font-style: italic; color: #555; margin: 8px 0; }
+    .script-line { margin-bottom: 6px; }
+  `;
+
+  w.document.open();
+  w.document.write(`<!doctype html><html><head><title>${escapeHtml(title)}</title><style>${css}</style></head><body>${renderScriptHtml(txt)}</body></html>`);
   w.document.close();
   w.focus();
   setTimeout(() => w.print(), 250);
