@@ -321,6 +321,36 @@ textarea {
   margin: 0.55rem 0 0.35rem;
   color: #7a6b58;
 }
+.script-h1 {
+  text-align: center;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin: 0.85rem 0 0.5rem;
+  color: #463820;
+}
+.script-h2 {
+  text-align: center;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin: 0.7rem 0 0.42rem;
+  color: #5c4723;
+}
+.script-h3 {
+  text-align: center;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.84rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin: 0.62rem 0 0.35rem;
+  color: #6a4f23;
+}
 .script-stage {
   text-align: center;
   color: #6c6253;
@@ -451,9 +481,10 @@ textarea {
         <div class="editor-tips">
           <div>
             <strong>Script Format Tips</strong><br>
-            <code># Scene 1</code> for headings<br>
-            <code>## Beat</code> for smaller headings<br>
-            <code>[Lights dim.]</code> for stage directions<br>
+            <code>[Setting]</code> → heading (H3)<br>
+            <code>[[Direction]]</code> → larger heading (H2)<br>
+            <code>[[[Scene 1]]]</code> → giant heading (H1)<br>
+            <code>(Lights dim.)</code> for stage directions<br>
             <code>SOCRATES: Dialogue text...</code> for dialogue<br>
             <code>@Billy@ Hey, what&#39;s *going on*?</code><br>
             <code>@ Lisa: @ Not much. **Damn!**</code>
@@ -473,13 +504,13 @@ textarea {
     <section class="panel combine-panel">
       <div class="panel-title">
         <h3>Full Allegory Draft</h3>
-        <span class="sub">Before Day 19: click Combine Draft Scripts</span>
+        <span class="sub">Combine drafts, copy, or export to PDF</span>
       </div>
       <div class="combine-actions">
         <button class="combine-btn" onclick="combineDraftScripts()">Combine Draft Scripts</button>
         <button class="combine-btn" onclick="copyCombinedScript()">Copy Combined Script</button>
+        <button class="combine-btn" onclick="downloadCombinedPdf()">Download as PDF</button>
       </div>
-      <div class="preview" id="combinedPreview"></div>
     </section>
   </main>
 </div>
@@ -770,17 +801,11 @@ function renderEditor() {
   };
 
   renderGroupPreview();
-  renderCombinedPreview();
 }
 
 function renderGroupPreview() {
   const txt = sessionDrafts[state.currentGroup] || '';
   document.getElementById('groupPreview').innerHTML = renderScriptHtml(txt);
-}
-
-function renderCombinedPreview() {
-  const txt = state.combinedScript || 'No combined script yet. Click "Combine Draft Scripts".';
-  document.getElementById('combinedPreview').innerHTML = renderScriptHtml(txt);
 }
 
 function renderScriptHtml(raw) {
@@ -802,15 +827,27 @@ function renderScriptHtml(raw) {
       return;
     }
 
-    const bracketTag = t.match(/^\[\[\s*([^\]]+?)\s*\]\]$/);
-    if (bracketTag) {
-      const tag = bracketTag[1].trim();
+    const h1Tag = t.match(/^\[\[\[\s*([^\]]+?)\s*\]\]\]$/);
+    if (h1Tag) {
+      html.push(`<div class="script-h1">${formatInlineMarkup(h1Tag[1].trim())}</div>`);
+      return;
+    }
+
+    const h2Tag = t.match(/^\[\[\s*([^\]]+?)\s*\]\]$/);
+    if (h2Tag) {
+      const tag = h2Tag[1].trim();
       const cueKey = tag.toUpperCase();
       if (cueLabels[cueKey]) {
         html.push(`<div class="script-cue">${escapeHtml(cueLabels[cueKey])}</div>`);
       } else {
-        html.push(`<div class="script-tag-title">${formatInlineMarkup(tag)}</div>`);
+        html.push(`<div class="script-h2">${formatInlineMarkup(tag)}</div>`);
       }
+      return;
+    }
+
+    const h3Tag = t.match(/^\[\s*([^\]]+?)\s*\]$/);
+    if (h3Tag) {
+      html.push(`<div class="script-h3">${formatInlineMarkup(h3Tag[1].trim())}</div>`);
       return;
     }
 
@@ -906,7 +943,7 @@ function combineDraftScripts() {
 
   state.combinedScript = pieces.filter(Boolean).join('\n');
   saveState();
-  renderCombinedPreview();
+  alert('Combined script updated.');
 }
 
 function copyCombinedScript() {
@@ -920,6 +957,38 @@ function copyCombinedScript() {
   }).catch(() => {
     alert('Clipboard blocked. Copy manually from preview.');
   });
+}
+
+function downloadCombinedPdf() {
+  const txt = state.combinedScript || '';
+  if (!txt.trim()) {
+    alert('No combined script yet. Click Combine Draft Scripts first.');
+    return;
+  }
+
+  const w = window.open('', '_blank');
+  if (!w) {
+    alert('Popup blocked. Please allow popups for this site to export PDF.');
+    return;
+  }
+
+  const css = `
+    body { font-family: Georgia, serif; margin: 28px; color: #222; line-height: 1.55; }
+    .script-h1,.script-h2,.script-h3,.script-heading,.script-subheading,.script-cue,.script-tag-title { text-align: center; margin: 14px 0 8px; font-weight: 700; }
+    .script-h1 { font-size: 22px; }
+    .script-h2 { font-size: 18px; }
+    .script-h3 { font-size: 15px; }
+    .script-char { margin-top: 10px; font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase; }
+    .script-dialogue { margin-left: 18px; margin-bottom: 6px; }
+    .script-stage { text-align: center; font-style: italic; color: #555; margin: 8px 0; }
+    .script-line { margin-bottom: 6px; }
+  `;
+
+  w.document.open();
+  w.document.write(`<!doctype html><html><head><title>Combined Script</title><style>${css}</style></head><body>${renderScriptHtml(txt)}</body></html>`);
+  w.document.close();
+  w.focus();
+  setTimeout(() => w.print(), 250);
 }
 
 function exportProject() {
