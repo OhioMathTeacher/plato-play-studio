@@ -197,6 +197,18 @@ body {
   font-size: 0.73rem;
   background: #fffdfa;
 }
+.doc-link-note {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.65rem;
+  line-height: 1.35;
+  color: #7f7565;
+}
+.doc-link-note.warn {
+  color: #9a5a1b;
+}
+.doc-link-note.ok {
+  color: #476437;
+}
 .main {
   display: grid;
   gap: 0.85rem;
@@ -687,6 +699,7 @@ function renderGroupSetup() {
   const wrap = document.getElementById('groupSetup');
   wrap.innerHTML = '';
   state.groups.forEach((g, idx) => {
+    const docCheck = analyzeGoogleDocLink(g.docUrl || '');
     const item = document.createElement('div');
     item.className = 'setup-item';
     item.innerHTML = `
@@ -696,6 +709,7 @@ function renderGroupSetup() {
       <input value="${escapeAttr(g.scene)}" oninput="updateGroupMeta(${idx}, 'scene', this.value)">
       <label>Google Doc URL (Optional)</label>
       <input value="${escapeAttr(g.docUrl || '')}" placeholder="https://docs.google.com/..." oninput="updateGroupMeta(${idx}, 'docUrl', this.value)">
+      <div class="doc-link-note ${escapeAttr(docCheck.tone)}">${escapeHtml(docCheck.message)}</div>
     `;
     wrap.appendChild(item);
   });
@@ -808,6 +822,25 @@ function docExportUrl(rawUrl) {
   const m = String(rawUrl).match(/\/document\/d\/([a-zA-Z0-9-_]+)/);
   if (!m) return null;
   return `https://docs.google.com/document/d/${m[1]}/export?format=txt`;
+}
+
+function analyzeGoogleDocLink(rawUrl) {
+  const value = String(rawUrl || '').trim();
+  if (!value) {
+    return { tone: '', message: 'Optional. Paste a Google Doc edit link if you want Pull Doc / View Combined to use it.' };
+  }
+
+  const isGoogleDoc = /^https?:\/\/docs\.google\.com\/document\/d\//i.test(value);
+  if (!isGoogleDoc) {
+    return { tone: 'warn', message: 'This does not look like a Google Doc link.' };
+  }
+
+  const looksEditable = /\/edit(?:\?|$|#)/i.test(value);
+  if (looksEditable) {
+    return { tone: 'ok', message: 'Looks like an edit link. This page cannot verify actual Google editing permissions.' };
+  }
+
+  return { tone: 'warn', message: 'This may be a view-only/share link. Use the Google Doc edit URL if students should edit it.' };
 }
 
 async function fetchDocDraftText(rawDocUrl) {
@@ -1156,11 +1189,7 @@ function downloadCombinedPdf() {
     .script-line { margin-bottom: 6px; }
   `;
 
-  w.document.open();
-  w.document.write(`<!doctype html><html><head><title>Combined Script</title><style>${css}</style></head><body>${renderScriptHtml(txt)}</body></html>`);
-  w.document.close();
-  w.focus();
-  setTimeout(() => w.print(), 250);
+  openPdfPrintWindow(w, 'Combined Script', css, renderScriptHtml(txt));
 }
 
 function downloadFormattedPreviewPdf() {
@@ -1192,11 +1221,13 @@ function downloadFormattedPreviewPdf() {
     .script-line { margin-bottom: 6px; }
   `;
 
-  w.document.open();
-  w.document.write(`<!doctype html><html><head><title>${escapeHtml(title)}</title><style>${css}</style></head><body>${renderScriptHtml(txt)}</body></html>`);
-  w.document.close();
-  w.focus();
-  setTimeout(() => w.print(), 250);
+  openPdfPrintWindow(w, title, css, renderScriptHtml(txt));
+}
+
+function openPdfPrintWindow(win, title, css, bodyHtml) {
+  win.document.open();
+  win.document.write(`<!doctype html><html><head><title>${escapeHtml(title)}</title><style>${css}</style></head><body>${bodyHtml}<script>window.addEventListener('afterprint', () => window.close()); window.onload = () => { window.focus(); setTimeout(() => window.print(), 150); };</script></body></html>`);
+  win.document.close();
 }
 
 function exportProject() {
