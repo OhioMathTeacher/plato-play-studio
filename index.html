@@ -1226,8 +1226,11 @@ function downloadFormattedPreviewPdf() {
 
 function openPdfPrintWindow(win, title, css, bodyHtml) {
   win.document.open();
-  win.document.write(`<!doctype html><html><head><title>${escapeHtml(title)}</title><style>${css}</style></head><body>${bodyHtml}<script>window.addEventListener('afterprint', () => window.close()); window.onload = () => { window.focus(); setTimeout(() => window.print(), 150); };</script></body></html>`);
+  win.document.write(`<!doctype html><html><head><title>${escapeHtml(title)}</title><style>${css}</style></head><body>${bodyHtml}</body></html>`);
   win.document.close();
+  win.addEventListener('afterprint', () => win.close());
+  win.focus();
+  setTimeout(() => win.print(), 150);
 }
 
 function exportProject() {
