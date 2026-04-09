@@ -91,7 +91,7 @@ The app supports simple script markup in the draft editor.
 
 ### Stage Directions
 
-- `(Lights dim.)` -> stage direction (flush left, italic)
+- `(Lights dim.)` -> stage direction (flush left, italic) — parentheses are markup delimiters only, not displayed
 
 ### Dialogue
 

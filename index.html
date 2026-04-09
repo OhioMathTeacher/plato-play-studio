@@ -510,7 +510,7 @@ textarea {
 <header class="header">
   <h1>Plato Play Draft Studio</h1>
   <p>Script drafting only: group drafts, shared visibility, and one-click combined script for table read.</p>
-  <div class="build-stamp">Build: 2026-04-08-r1</div>
+  <div class="build-stamp">Build: 2026-04-09-r1</div>
   <div class="toolbar">
     <button class="btn" onclick="exportProject()" title="Download a JSON backup of your saved group setup, drafts, and combined script.">Export Project</button>
     <button class="btn" onclick="document.getElementById('importFile').click()" title="Load a previously exported JSON project file back into the studio.">Import Project</button>
@@ -579,7 +579,7 @@ textarea {
               <div class="hint-item" data-tip="Largest heading, useful for scene titles.">
                 <span class="hint-code">[[[Scene 1]]]</span><span class="hint-text">H1 heading</span>
               </div>
-              <div class="hint-item" data-tip="Parentheses become flush-left stage direction text in italics.">
+              <div class="hint-item" data-tip="Parentheses mark stage directions. They are not displayed in the preview, only the text inside.">
                 <span class="hint-code">(Lights dim.)</span><span class="hint-text">Stage direction</span>
               </div>
               <div class="hint-item" data-tip="Use all caps name + colon for character dialogue.">
@@ -1044,7 +1044,12 @@ function renderScriptHtml(raw) {
     }
 
     if ((t.startsWith('[') && t.endsWith(']')) || (t.startsWith('(') && t.endsWith(')'))) {
-      html.push(`<div class="script-stage">${formatInlineMarkup(t)}</div>`);
+      // Strip outer parentheses from stage directions but keep brackets
+      let stageText = t;
+      if (t.startsWith('(') && t.endsWith(')')) {
+        stageText = t.slice(1, -1);
+      }
+      html.push(`<div class="script-stage">${formatInlineMarkup(stageText)}</div>`);
       return;
     }
 
