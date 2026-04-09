@@ -6,7 +6,7 @@
 
 [[Prologue: The Dialogue Begins]]
 
-(The stage is dim. A faint, flickering amber light suggests firelight. Shadows move softly across a rough stone backdrop. SOCRATES stands slightly apart, calm and composed, while GLAUCON listens nearby.)
+(The stage is dim. A faint, flickering amber light suggests firelight. Shadows move softly across a rough stone backdrop. SOCRATES I stands slightly apart, calm and composed, while GLAUCON I (GLAW-kon) listens nearby.)
 
 SOCRATES: Next, said I, compare our nature in respect of education and its lack to such an experience as this.
 
@@ -26,7 +26,7 @@ SOCRATES: Some light, of course, is allowed them, namely from a fire that casts 
 
 [The images carried before the fire]
 
-(FIGURES begin to walk along the raised walkway behind the wall. They carry statues, cutouts, and objects—animals, people, and abstract shapes—held above the wall so their shadows project clearly onto the cave wall in front of the prisoners. Some figures speak softly; others remain silent.)
+(Behind a white sheet stretched across the raised walkway, SHADOW PUPPET OPERATORS use flashlights and cutouts to create moving silhouettes. In front of the sheet, FIGURES walk along the walkway carrying statues, cutouts, and objects—animals, people, and abstract shapes—held above the low wall so their shadows project clearly onto the cave wall in front of the prisoners. Some FIGURES speak softly; others remain silent.)
 
 SOCRATES: So now imagine that all along this low wall people are carrying all sorts of things that reach up higher than the wall: statues and other carvings made of stone or wood and many other artifacts that people have made. As you would expect, some are talking to each other and some are silent.
 
@@ -81,7 +81,7 @@ GLAUCON: That would absolutely have to be.
 
 [The Release]
 
-(GUARD1 comes and releases one prisoner, THEA, from her shackles.)
+(GUARD1 comes and releases one prisoner, THEA, from her shackles. SOCRATES II continues the narration.)
 
 SOCRATES: The prisoner has been freed from their imprisonment, and therefore their lack of knowledge.
 
@@ -145,7 +145,7 @@ GLAUCON: (firm and emotional) No… I think she would rather endure anything—a
 
 [[[Triad C - Scene 3: The Return]]]
 
-(A dark cave. Several prisoners sit chained, facing a wall. THEA slowly enters, stumbling and shielding her eyes. The prisoners turn and react silently, pointing, laughing, and recoiling.)
+(A dark cave. Several prisoners sit chained, facing a wall. THEA slowly enters, stumbling and shielding her eyes. The prisoners turn and react silently, pointing, laughing, and recoiling. SOCRATES III and GLAUCON III observe and narrate.)
 
 SOCRATES: (thoughtfully) Now consider this, Glaucon. If the one who escaped were to return and sit again in her old place, would she not, coming suddenly from the sunlight, find her eyes filled with darkness?
 
