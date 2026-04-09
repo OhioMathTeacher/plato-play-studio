@@ -91,7 +91,7 @@ The app supports simple script markup in the draft editor.
 
 ### Stage Directions
 
-- `(Lights dim.)` -> centered stage direction
+- `(Lights dim.)` -> stage direction (flush left, italic)
 
 ### Dialogue
 
