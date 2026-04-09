@@ -1,6 +1,7 @@
 [[[Plato: Allegory of the Cave - One-Act Draft]]]
 
-[[Combined from group drafts. Edit after table read.]]
+[[Screenplay written and performed by]]
+[[Students of TCE 265, Spring Semester, 2026]]
 
 [[[Triad A - Scene 1: The Cave + Liberation]]]
 
@@ -71,11 +72,6 @@ SOCRATES I: All in all, I responded, those who were chained would consider nothi
 GLAUCON I: That would absolutely have to be.
 
 (Lights slowly dim further, leaving only the shadows flickering on the wall as the scene closes.)
-
-
-<!-- ========================================
-     NEXT SECTION BEGINS HERE
-     ======================================== -->
 
 [[[Triad B - Scene 2: The Ascent]]]
 
@@ -174,9 +170,3 @@ SOCRATES III: (heavy, serious) And if, in their fear and anger, they were able t
 GLAUCON III: (quiet, heavy) Yes… I believe they would. If her words threatened everything they believed to be true, they would see her not as a guide, but as a danger.
 
 (The prisoners surround THEA. Lights slowly dim to black.)
-
-
-<!-- ========================================
-     END OF SCRIPT
-     ======================================== -->
-
