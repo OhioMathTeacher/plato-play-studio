@@ -1197,7 +1197,8 @@ function downloadCombinedPdf() {
     .script-speech { break-inside: avoid; page-break-inside: avoid; }
     .script-char { margin-top: 10px; font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase; }
     .script-dialogue { margin-left: 18px; margin-bottom: 6px; }
-    .script-stage { text-align: center; font-style: italic; color: #555; margin: 8px 0; }
+    .script-stage { text-align: left; font-style: italic; color: #555; margin: 6px 0; break-inside: avoid; page-break-inside: avoid; break-before: avoid; page-break-before: avoid; }
+    .script-speech + .script-stage { break-before: avoid; page-break-before: avoid; }
     .script-line { margin-bottom: 2px; }
     .script-gap { height: 2px; margin: 0; }
   `;
@@ -1231,7 +1232,8 @@ function downloadFormattedPreviewPdf() {
     .script-speech { break-inside: avoid; page-break-inside: avoid; }
     .script-char { margin-top: 10px; font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase; }
     .script-dialogue { margin-left: 18px; margin-bottom: 6px; }
-    .script-stage { text-align: center; font-style: italic; color: #555; margin: 8px 0; }
+    .script-stage { text-align: left; font-style: italic; color: #555; margin: 6px 0; break-inside: avoid; page-break-inside: avoid; break-before: avoid; page-break-before: avoid; }
+    .script-speech + .script-stage { break-before: avoid; page-break-before: avoid; }
     .script-line { margin-bottom: 2px; }
     .script-gap { height: 2px; margin: 0; }
   `;
