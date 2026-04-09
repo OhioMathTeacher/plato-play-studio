@@ -392,7 +392,11 @@ textarea {
   display: grid;
   gap: 0.45rem;
 }
-.script-line { margin-bottom: 0.45rem; }
+.script-line { margin-bottom: 0.2rem; }
+.script-gap {
+  height: 0.16rem;
+  margin: 0;
+}
 .script-heading {
   text-align: center;
   font-family: 'DM Sans', sans-serif;
@@ -438,7 +442,7 @@ textarea {
   font-weight: 800;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  margin: 0.62rem 0 0.35rem;
+  margin: 0.34rem 0 0.18rem;
   color: #6a4f23;
 }
 .script-stage {
@@ -1006,7 +1010,7 @@ function renderScriptHtml(raw) {
   lines.forEach(line => {
     const t = line.trim();
     if (!t) {
-      html.push('<div class="script-line">&nbsp;</div>');
+      html.push('<div class="script-line script-gap"></div>');
       return;
     }
 
@@ -1183,15 +1187,16 @@ function downloadCombinedPdf() {
   }
 
   const css = `
-    body { font-family: Georgia, serif; margin: 28px; color: #222; line-height: 1.55; }
+    body { font-family: Georgia, serif; margin: 28px; color: #222; line-height: 1.45; }
     .script-h1,.script-h2,.script-h3,.script-heading,.script-subheading,.script-cue,.script-tag-title { text-align: center; margin: 14px 0 8px; font-weight: 700; }
     .script-h1 { font-size: 22px; }
     .script-h2 { font-size: 18px; }
-    .script-h3 { font-size: 15px; }
+    .script-h3 { font-size: 15px; margin: 8px 0 4px; }
     .script-char { margin-top: 10px; font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase; }
     .script-dialogue { margin-left: 18px; margin-bottom: 6px; }
     .script-stage { text-align: center; font-style: italic; color: #555; margin: 8px 0; }
-    .script-line { margin-bottom: 6px; }
+    .script-line { margin-bottom: 2px; }
+    .script-gap { height: 2px; margin: 0; }
   `;
 
   openPdfPrintWindow(w, 'Combined Script', css, renderScriptHtml(txt));
@@ -1215,15 +1220,16 @@ function downloadFormattedPreviewPdf() {
   }
 
   const css = `
-    body { font-family: Georgia, serif; margin: 28px; color: #222; line-height: 1.55; }
+    body { font-family: Georgia, serif; margin: 28px; color: #222; line-height: 1.45; }
     .script-h1,.script-h2,.script-h3,.script-heading,.script-subheading,.script-cue,.script-tag-title { text-align: center; margin: 14px 0 8px; font-weight: 700; }
     .script-h1 { font-size: 22px; }
     .script-h2 { font-size: 18px; }
-    .script-h3 { font-size: 15px; }
+    .script-h3 { font-size: 15px; margin: 8px 0 4px; }
     .script-char { margin-top: 10px; font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase; }
     .script-dialogue { margin-left: 18px; margin-bottom: 6px; }
     .script-stage { text-align: center; font-style: italic; color: #555; margin: 8px 0; }
-    .script-line { margin-bottom: 6px; }
+    .script-line { margin-bottom: 2px; }
+    .script-gap { height: 2px; margin: 0; }
   `;
 
   openPdfPrintWindow(w, title, css, renderScriptHtml(txt));
