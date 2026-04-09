@@ -477,6 +477,10 @@ textarea {
   color: #3c3327;
   margin-top: 0.55rem;
 }
+.script-speech {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
 .script-dialogue {
   margin-left: 1.6rem;
   line-height: 1.55;
@@ -1059,15 +1063,13 @@ function renderScriptHtml(raw) {
 
     const atSpeaker = parseAtSpeaker(t);
     if (atSpeaker) {
-      html.push(`<div class="script-char">${formatInlineMarkup(atSpeaker.speaker)}</div>`);
-      html.push(`<div class="script-dialogue">${formatInlineMarkup(atSpeaker.dialogue)}</div>`);
+      html.push(`<div class="script-speech"><div class="script-char">${formatInlineMarkup(atSpeaker.speaker)}</div><div class="script-dialogue">${formatInlineMarkup(atSpeaker.dialogue)}</div></div>`);
       return;
     }
 
     const m = t.match(/^([A-Z][A-Z0-9_\- ]{1,30}):\s*(.+)$/);
     if (m) {
-      html.push(`<div class="script-char">${formatInlineMarkup(m[1])}</div>`);
-      html.push(`<div class="script-dialogue">${formatInlineMarkup(m[2])}</div>`);
+      html.push(`<div class="script-speech"><div class="script-char">${formatInlineMarkup(m[1])}</div><div class="script-dialogue">${formatInlineMarkup(m[2])}</div></div>`);
       return;
     }
 
@@ -1192,6 +1194,7 @@ function downloadCombinedPdf() {
     .script-h1 { font-size: 22px; }
     .script-h2 { font-size: 18px; }
     .script-h3 { font-size: 15px; margin: 8px 0 4px; }
+    .script-speech { break-inside: avoid; page-break-inside: avoid; }
     .script-char { margin-top: 10px; font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase; }
     .script-dialogue { margin-left: 18px; margin-bottom: 6px; }
     .script-stage { text-align: center; font-style: italic; color: #555; margin: 8px 0; }
@@ -1225,6 +1228,7 @@ function downloadFormattedPreviewPdf() {
     .script-h1 { font-size: 22px; }
     .script-h2 { font-size: 18px; }
     .script-h3 { font-size: 15px; margin: 8px 0 4px; }
+    .script-speech { break-inside: avoid; page-break-inside: avoid; }
     .script-char { margin-top: 10px; font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase; }
     .script-dialogue { margin-left: 18px; margin-bottom: 6px; }
     .script-stage { text-align: center; font-style: italic; color: #555; margin: 8px 0; }
